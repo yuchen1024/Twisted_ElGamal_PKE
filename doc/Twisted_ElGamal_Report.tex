@@ -1,0 +1,518 @@
+\newcommand{\path}{/Users/chenyu/Documents/Research/PaperEngine}
+\documentclass[a4paper,10pt]{article}
+\usepackage{authblk}
+
+\input{\path/mypapersetting}
+\usepackage{float}
+
+\newcommand{\Oracle}{}
+
+
+\begin{document}
+
+
+\thispagestyle{empty}
+
+\title{Twisted ElGamal}
+
+\author{Yu Chen\\ {\normalsize \blue{\texttt{cycosmic@gmail.com}}}}
+
+\affil{Shandong University}
+
+
+\date{}
+
+\maketitle
+
+\begin{abstract}
+In this work, we introduce a new additively homomorphic public-key encryption scheme called twisted ElGamal,  
+which is not only as secure and efficient as standard exponential ElGamal, 
+but also very friendly to zero-knowledge proof protocols, such as Sigma protocols and range proofs.    
+This feature makes twisted ElGamal extremely useful in numerous privacy-preserving scenarios, 
+such as cryptocurrencies with strong privacy and secure machine learning.      
+% \begin{trivlist}
+% \item \textbf{Keywords:} cryptocurrencies, confidential transaction, accountability, twisted ElGamal 
+% \end{trivlist}
+\end{abstract}
+
+\thispagestyle{empty}
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+\newpage
+
+\pagestyle{plain}
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\section{Introduction}
+In this report, we introduce twisted ElGamal~\cite{CMT2019}, 
+which is additively homomorphic and friendly to zero-knowledge proofs.
+ 
+
+\section{Preliminaries}
+We first fix some notations and recall the related cryptographic assumptions. 
+\subsection{Basic Notations}
+We denote the security parameter by $\lambda \in \mathbb{N}$. 
+A function is negligible in $\lambda$, written $\mathsf{negl}(\lambda)$, 
+if it vanishes faster than the inverse of any polynomial in $\lambda$.
+Let $X = \{X_\lambda\}_{\lambda \in \mathbb{N}}$ and $Y = \{Y_\lambda\}_{\lambda \in \mathbb{N}}$ 
+be two distribution ensembles indexed by $\lambda$. 
+We say that $X$ and $Y$ are statistically indistinguishable, written $X \approx_s Y$, 
+if the statistical distance between $X_\lambda$ and $Y_\lambda$ is negligible in $\lambda$. 
+We say that $X$ and $Y$ are computationally indistinguishable, written $X \approx_c Y$, 
+if the advantage of any PPT algorithm in distinguishing $X_\lambda$ and $Y_\lambda$ is $\mathsf{negl}(\lambda)$. 
+A probabilistic polynomial time (PPT) algorithm is a randomized algorithm that runs in time $\mathsf{poly}(\lambda)$.
+If $\mathcal{A}$ is a randomized algorithm, we write $z \leftarrow \mathcal{A}(x_1, \dots, x_n;r)$
+to denote that $\mathcal{A}$ outputs $z$ on inputs $(x_1, \dots, x_n)$ and randomness $r$. 
+For notational clarity we usually omit $r$ and write $z \leftarrow \mathcal{A}(x_1, \dots, x_n)$.  
+For a positive integer $n$, we use $[n]$ to denote the set of numbers $\{1, \dots, n\}$.
+For a set $X$, we use $|X|$ to denote its size 
+and use $x \sample X$ to denote sampling $x$ uniformly at random from $X$. 
+We use $U_X$ to denote the uniform distribution over $X$. 
+
+\subsection{Cryptographic Assumptions}
+Let $\mathsf{GroupGen}$ be a PPT algorithm that on input a security parameter $1^\lambda$, 
+outputs description of a cyclic group $\mathbb{G}$ of prime order $p = \Theta(2^\lambda)$, 
+and a random generator $g$ for $\mathbb{G}$. 
+In what follows, we describe the discrete-logarithm based assumptions related to 
+$(\mathbb{G}, g, p) \leftarrow \mathsf{GroupGen}(1^\lambda)$.   
+
+\begin{definition}[Decisional Diffie-Hellman Assumption]
+The DDH assumption holds if for any PPT adversary, we have: 
+\begin{equation*}
+\left|\Pr[\mathcal{A}(g, g^a, g^b, g^{ab}) = 1] - 
+\Pr[\mathcal{A}(g, g^a, g^b, g^c) = 1] \right| \leq \mathsf{negl}(\lambda),
+\end{equation*}
+where the probability is over the randomness of $\mathsf{GroupGen}(1^\lambda)$, $\mathcal{A}$'s random tape, 
+and the random choices of $a, b, c \sample \mathbb{Z}_p$. 
+\end{definition}
+
+\begin{definition}[Divisible Decisional Diffie-Hellman Assumption]
+The divisible DDH assumption holds if for any PPT adversary, we have: 
+\begin{equation*}
+\left|\Pr[\mathcal{A}(g, g^a, g^b, g^{a/b}) = 1] - \Pr[\mathcal{A}(g, g^a, g^b, g^c) = 1] \right| 
+\leq \mathsf{negl}(\lambda),
+\end{equation*}
+where the probability is over the randomness of $\mathsf{GroupGen}(1^\lambda)$, $\mathcal{A}$'s random tape,  
+and the random choices of $a, b, c \sample \mathbb{Z}_p$.  
+\end{definition}
+As proved in~\cite{BDZ2003}, the divisible DDH assumption is equivalent to the standard DDH assumption.
+ 
+
+\subsection{Public-Key Encryption}
+A PKE scheme consists of four polynomial time algorithms as follows. 
+\begin{itemize} \itemsep 1pt \parskip 0pt \parsep 0pt
+\item $\mathsf{Setup}(1^\lambda)$: on input a security parameter $1^\lambda$, 
+    output public parameters $pp$. We assume that $pp$ includes the descriptions of message space $M$, 
+    randomness space $R$. 
+
+\item $\mathsf{KeyGen}(pp)$: on input $pp$, output a public key $pk$ and a secret key $sk$.
+
+\item $\mathsf{Enc}(pk, m)$: on input a public key $pk$ and a plaintext $m$, output a ciphertext $C$. 
+    When emphasizing the randomness $r$ used for encryption, we denote this by $C \leftarrow \mathsf{Enc}(pk, m; r)$.   
+
+\item $\mathsf{Dec}(sk, C)$: on input a secret key $sk$ and a ciphertext $C$, 
+    output a plaintext $m$ or a distinguished symbol $\bot$ indicating that $C$ is invalid.
+\end{itemize}
+
+\begin{remark}
+In practice, it is common for public parameters to be generated and fixed ``once-and-for-all'', 
+and then shared by multiple users. Of course, each user can generate its own public parameters. 
+In this case, $\mathsf{Setup}$ is absorbed into $\mathsf{KeyGen}$ and $pp$ becomes a part of public key. 
+\end{remark}
+
+\begin{trivlist}
+\item \textbf{Correctness.} For all $pp \leftarrow \mathsf{Setup}(1^\lambda)$, 
+    all $(pk, sk) \leftarrow \mathsf{KeyGen}(pp)$ and all $m \in M$ (here $M$ is the message space), 
+    we have $\mathsf{Dec}(sk, \mathsf{Enc}(pk, m)) = m$.
+\end{trivlist}
+
+\begin{trivlist}
+\item \textbf{Homomorphism.} For any public key $pk$, any $(m_1, r_1), (m_2, r_2) \in M \times R$, 
+    we have $\mathsf{Enc}(pk, m_1; r_1) + \mathsf{Enc}(pk, m_2; r_2) = \mathsf{Enc}(pk, m_1+m_2; r_1+r_2)$. 
+    Here, we slight abuse the symbol ``+'' to denote component-wise operation over ciphertext space $\mathbb{G}^2$. 
+    Additive homomorphism on message already suffices for most applications: 
+    $\mathsf{Enc}(pk, m_1) + \mathsf{Enc}(pk, m_2)$ is an encryption of $(m_1+m_2)$ of $pk$ under some appropriate randomness. 
+    When both ciphertext and message spaces are finite cyclic groups, we can naturally define scalar multiplication, 
+    which is a special case of additive homomorphism: 
+    for all $k \in \mathbb{Z}_p$, $k \cdot \mathsf{Enc}(pk, m)$ is an encryption of $km$ of $pk$. 
+\end{trivlist}
+
+For clarity, we define extended algorithms of PKE as below: 
+\begin{itemize} \itemsep 1pt \parskip 0pt \parsep 0pt
+    \item $\mathsf{ReRand}(sk, C; r)$: on input $sk$ and $c$, output a re-randomized ciphertext $C'$ of $C$. 
+
+    \item $\mathsf{HomoAdd}(C_1, C_2)$: on input $C_1$ and $C_2$, output $C = C_1 + C_2$.  
+
+    \item $\mathsf{HomoSub}(C_1, C_2)$: on input $C_1$ and $C_2$, output $C = C_1 - C_2$. 
+
+    \item $\mathsf{ScalarMul}(C, k)$: on input $C$ and a scalar $k \in \mathbb{Z}_p$, output $C' = k \cdot C$.  
+\end{itemize}
+
+
+\begin{trivlist}
+\item \textbf{IND-CPA security.} Let $\mathcal{A}$ be an adversary against the semantic security of 
+PKE component and define its advantage in the following experiment:
+\begin{displaymath}
+    \AdvA = \Pr \left[\beta=\beta': 
+    \begin{array}{ll}
+        & pp \leftarrow \mathsf{Setup}(1^\lambda); \\
+        & (pk, sk) \leftarrow \mathsf{KeyGen}(pp)\\
+        & (state, m_0, m_1) \leftarrow \mathcal{A}_1(pp, pk);\\
+        & \beta \sample \{0,1\};\\
+        & C^* \leftarrow \mathsf{Enc}(pk, m_\beta)\\
+        & \beta' \leftarrow \mathcal{A}_2(state, C^*);
+    \end{array}
+    \right] - \frac{1}{2}.
+\end{displaymath}
+We say a PKE scheme is IND-CPA secure if no PPT adversary $\mathcal{A}$ 
+has non-negligible advantage in the above security experiment.
+\end{trivlist}
+
+
+
+\begin{trivlist}
+\item \textbf{Key Privacy/Anonymity.} Let $\mathcal{A}$ be an adversary against the anonymity of the PKE component 
+and define its advantage in the following experiment:
+\begin{displaymath}
+    \AdvA = \Pr \left[\beta=\beta': 
+    \begin{array}{ll}
+        & pp \leftarrow \mathsf{Setup}(1^\lambda); \\
+        & (pk_0, sk_0), (pk_1, sk_1) \leftarrow \mathsf{KeyGen}(pp)\\
+        & (state, m) \leftarrow \mathcal{A}_1(pp, pk_1, pk_2);\\
+        & \beta \sample \{0,1\};\\
+        & C^* \leftarrow \mathsf{Enc}(pk_\beta, m)\\
+        & \beta' \leftarrow \mathcal{A}_2(state, C^*);
+    \end{array}
+    \right] - \frac{1}{2}.
+\end{displaymath}
+We say a PKE scheme is anonymous (i.e., satisfying key privacy) if no PPT adversary $\mathcal{A}$ 
+has non-negligible advantage in the above security experiment.
+\end{trivlist}  
+
+\section{Scheme Description and Security Analysis}
+\subsection{Twisted ElGamal} 
+Twisted ElGamal consists of four algorithms as below: 
+
+\begin{trivlist}
+\item Basic algorithms:
+\begin{itemize} \itemsep 1pt \parskip 0pt \parsep 0pt
+\item $\mathsf{Setup}(1^\lambda)$: run $(\mathbb{G}, g, p) \leftarrow \mathsf{GroupGen}(1^\lambda)$, 
+    pick $h \sample \mathbb{G}^*$, set $pp = (\mathbb{G}, g, h, p)$ as global public parameters. 
+    The randomness and message spaces are $\mathbb{Z}_p$. 
+
+\item $\mathsf{KeyGen}(pp)$: on input $pp$, choose $sk \sample \mathbb{Z}_p$, set $pk = g^{sk}$. 
+
+\item $\mathsf{Enc}(pk, m; r)$: compute $X = pk^r$, $Y = g^r h^m$, output $C = (X, Y)$. 
+
+\item $\mathsf{Dec}(sk, C)$: parse $C = (X, Y)$, compute $h^m = Y/X^{sk^{-1}}$, recover $m$ from $h^m$. 
+\end{itemize} 
+
+\item Extended algorithms:
+\begin{itemize} \itemsep 1pt \parskip 0pt \parsep 0pt
+    \item $\mathsf{ReRand}(sk, C; r')$: on input $sk$, $C = (X, Y)$ and randomness $r'$, 
+        compute $h^m = Y/X^{sk^{-1}}$, then compute $X' = pk^{r'}$, $Y' = g^{r'}h^m$, output $C' = (X', Y')$. 
+
+    \item $\mathsf{HomoAdd}(C_1, C_2)$: on input $C_1 = (X_1, Y_1)$ and $C_2 = (X_2, Y_2)$, 
+        compute $X = X_1+X_2$, $Y = Y_1+Y_2$, output $C = (X, Y)$.  
+
+    \item $\mathsf{HomoSub}(C_1, C_2)$: on input $C_1 = (X_1, Y_1)$ and $C_2 = (X_2, Y_2)$, 
+        compute $X = X_1-X_2$, $Y = Y_1-Y_2$, output $C = (X, Y)$.  
+
+    \item $\mathsf{HomoScalar}(C, k)$: on input $C$ and a scalar $k \in \mathbb{Z}_p$, 
+        compute $X' = k \cdot X$, $Y' = k \cdot Y$, output $C' = (X', Y')$.  
+\end{itemize}
+\end{trivlist}
+
+Correctness and additive homomorphism are obvious. 
+The IND-CPA security and anonymity are established by the following two theorems. 
+
+\begin{theorem}\label{theorem:IND-CPA}
+Twisted ElGamal is IND-CPA secure based on the divisible DDH assumption. 
+\end{theorem}
+\begin{proof}
+We proceed via two games. Let $S_i$ be the probability that $\mathcal{A}$ wins in Game $i$. 
+\begin{trivlist}
+\item $\textbf{Game 0.}$ The real IND-CPA security experiment. 
+Challenger $\mathcal{CH}$ interacts with $\mathcal{A}$ as below: 
+\begin{enumerate}
+\item \underline{Setup:} $\mathcal{CH}$ generates $pp$ and keypair as per definition, 
+    then sends $pp$ and $pk = g^{sk}$ to $\mathcal{A}$. 
+
+\item \underline{Challenge:} $\mathcal{A}$ submits $m_0, m_1$ to $\mathcal{CH}$ as the target messages. 
+    $\mathcal{CH}$ picks a random bit $\beta$ 
+    and randomness $r$, computes $X = pk^r$, $Y = g^r h^{m_\beta}$, sends $C = (X, Y)$ to $\mathcal{A}$.   
+
+\item \underline{Guess:} $\mathcal{A}$ outputs its guess $\beta'$ for $\beta$ and wins if $\beta' = \beta$. 
+\end{enumerate}
+
+\item According to the definition of Game 0, we have: 
+\begin{equation*}
+    \mathsf{Adv}_\mathcal{A}(\lambda) = \Pr[S_0] - 1/2.
+\end{equation*}
+\end{trivlist}
+
+\begin{trivlist}
+\item $\textbf{Game 1.}$ Same as Game 0 except $\mathcal{CH}$ generates the challenge ciphertext in a different way.  
+
+\begin{enumerate}\setcounter{enumi}{1}
+\item \underline{Challenge:} $\mathcal{A}$ submits $m_0, m_1$ to $\mathcal{CH}$ as the target messages. 
+    $\mathcal{CH}$ picks a random bit $\beta$ and \redul{two independent randomness $r$ and $s$, 
+    computes $X = pk^r$, $Y = g^s h^{m_\beta}$}, sends $C = (X, Y)$ to $\mathcal{A}$.   
+\end{enumerate}
+
+\item In Game 1, the distribution of $C$ is independent of $\beta$, thus we have:
+\begin{equation*}
+    \Pr[S_1] = 1/2.
+\end{equation*}
+\end{trivlist}
+
+It remains to prove $\Pr[S_1]$ and $\Pr[S_0]$ are negligibly close. 
+We prove this by showing if not so, one can build an adversary $\mathcal{B}$ breaks the divisible DDH assumption 
+with the same advantage. Given $(g, g^a, g^b, g^c)$, 
+$\mathcal{B}$ is asked to decide if it is a divisible DDH tuple or a random tuple. 
+To do so, $\mathcal{B}$ interacts with $\mathcal{A}$ by simulating $\mathcal{A}$'s challenger 
+in the following IND-CPA experiment. 
+\begin{enumerate}
+\item \underline{Setup:} $\mathcal{B}$ picks $h \sample \mathbb{G}^*$, sets $pp = (\mathbb{G}, g, h, p)$, 
+    sets $g^b$ as the public key, where $b \in \mathbb{Z}_p$ is interpreted as the corresponding secret key, 
+    which is unknown to $\mathcal{B}$. $\mathcal{B}$ sends $pp$ and $pk = g^b$ to $\mathcal{A}$. 
+
+\item \underline{Challenge:} $\mathcal{A}$ submits $m_0, m_1$ to $\mathcal{B}$. 
+    $\mathcal{B}$ picks a random bit $\beta$ 
+    and sets $X = g^a$, $Y = g^c h^{m_\beta}$, sends $C = (X, Y)$ to $\mathcal{A}$.  
+
+\item \underline{Guess:} $\mathcal{A}$ outputs a guess $\beta'$. 
+    $\mathcal{B}$ outputs ``1'' if $\beta' = \beta$ and ``0'' otherwise.  
+\end{enumerate}   
+If $(g, g^a, g^b, g^c)$ is a divisible DDH tuple, 
+$\mathcal{B}$ simulates Game 0 perfectly (with randomness $c = a/b$).  
+Else, $\mathcal{B}$ simulates Game 1 perfectly (with two independent randomness $a/b$ and $c$). 
+Thereby, we have $\mathsf{Adv}_\mathcal{B} = |\Pr[S_0] - \Pr[S_1]|$, 
+which is negligible in $\lambda$ by the divisible DDH assumption. 
+
+Putting all the above together, Theorem~\ref{theorem:IND-CPA} follows.  
+\end{proof}
+
+\begin{remark}
+We stress that twisted ElGamal remains secure even the adversary knows the discrete relation between $(g, h)$. 
+Thereby, $h$ can be set as a fixed or random element in $\mathbb{G}^*$.   
+In both cases, twisted ElGamal does not require trusted setup. 
+Looking ahead, we set $h$ as a hash value of $g$ in our implementation, 
+which is in line with the transparent setup in Bulletproofs~\cite{BulletProof2018}.   
+\end{remark}
+
+\begin{table}[!hbth]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+& \multicolumn{4}{c|}{size} & \multicolumn{3}{c|}{efficiency}\\
+\hline
+    & $pp$ & $pk$ & $sk$ & $C$ & $\mathsf{KeyGen}$ & $\mathsf{Enc}$ & $\mathsf{Dec}$\\
+\hline
+standard ElGamal & $|\mathbb{G}|$ & $|\mathbb{G}|$ & $|\mathbb{Z}_p|$ & $|2\mathbb{G}|$ 
+                 & 1Exp & 3Exp+2Add & 1Exp+1Add+1DLOG\\
+\hline
+twisted ElGamal & \red{$2|\mathbb{G}|$} & $|\mathbb{G}|$ & $|\mathbb{Z}_p|$ & $|2\mathbb{G}|$ 
+                 & 1Exp & 3Exp+2Add & 1Exp+1Add+1DLOG\\
+\hline
+\end{tabular}{}\label{table:comparison}
+\caption{Comparison between standard ElGamal and twisted ElGamal. 
+$|\mathbb{Z}_p|$ denotes the bits of a scalar field element, $|\mathbb{G}|$ denotes the bits of a group element. 
+Exp and Add denote exponentiation and add operation in $\mathbb{G}$, while DLOG denotes discrete search operation in $\mathbb{G}$.}
+\end{center}
+\end{table}
+
+\begin{theorem}\label{theorem:anonymity}
+Twisted ElGamal is anonymous based on the divisible DDH assumption. 
+\end{theorem}
+\begin{proof}
+We proceed via four games. 
+\begin{trivlist}
+\item $\textbf{Game 0.}$ Challenger $\mathcal{CH}$ interacts with $\mathcal{A}$ as follows: 
+\begin{enumerate}
+\item \underline{Setup:} $\mathcal{CH}$ generates $pp$ and two keypairs as per definition, 
+    then sends $pp$ and $pk_1$ and $pk_2$ to $\mathcal{A}$. 
+
+\item \underline{Challenge:} $\mathcal{A}$ submits $m$ to $\mathcal{CH}$ as the target message. 
+    $\mathcal{CH}$ picks a randomness $r$, computes $X = pk_1^r$, $Y = g^r h^m$, 
+    sends $C = (X, Y)$ to $\mathcal{A}$.   
+
+\item \underline{Guess:} $\mathcal{A}$ outputs its guess $\beta'$ for $\beta$ and wins if $\beta' = \beta$. 
+\end{enumerate}
+\end{trivlist}
+
+\begin{trivlist}
+\item $\textbf{Game 1.}$ Same as Game 0 except $\mathcal{CH}$ generates the challenge ciphertext in a different way.  
+
+\begin{enumerate}\setcounter{enumi}{1}
+\item \underline{Challenge:} $\mathcal{A}$ submits $m$ to $\mathcal{CH}$ as the target message. 
+    $\mathcal{CH}$ picks a random bit $\beta$ and \redul{two independent randomness $r$ and $s$, 
+    computes $X = pk_1^r$, $Y = g^s h^m$}, sends $C = (X, Y)$ to $\mathcal{A}$.   
+\end{enumerate}
+\end{trivlist}
+
+\begin{trivlist}
+\item $\textbf{Game 2.}$ Same as Game 1 except $\mathcal{CH}$ generates ciphertext using $pk_2$.  
+
+\begin{enumerate}\setcounter{enumi}{1}
+\item \underline{Challenge:} $\mathcal{A}$ submits $m$ to $\mathcal{CH}$ as the target message. 
+    $\mathcal{CH}$ picks a random bit $\beta$ and \redul{two independent randomness $r$ and $s$, 
+    computes $X = pk_2^r$, $Y = g^s h^m$}, sends $C = (X, Y)$ to $\mathcal{A}$.   
+\end{enumerate}
+\end{trivlist}
+
+\begin{trivlist}
+\item $\textbf{Game 3.}$ Same as Game 2 except $\mathcal{CH}$ generates ciphertext under the same randomness.  
+
+\begin{enumerate}\setcounter{enumi}{1}
+\item \underline{Challenge:} $\mathcal{A}$ submits $m$ to $\mathcal{CH}$ as the target message. 
+    $\mathcal{CH}$ picks randomness $r$, computes $X = pk_2^r$, $Y = g^r h^m$, sends $C = (X, Y)$ to $\mathcal{A}$.   
+\end{enumerate}
+\end{trivlist}
+
+It is easy to see that Game 0 $\approx_c$ Game 1, Game 2 $\approx_c$ Game 3 
+are computationally indistinguishable based on the divisible DDH assumption, while Game 1 $\equiv$ Game 2. 
+Putting all the above together, Theorem~\ref{theorem:anonymity} follows.  
+\end{proof}
+
+Recall that the divisible DDH assumption is equivalent to the standard DDH assumption, 
+thus we conclude that twisted ElGamal is IND-CPA secure and anonymous based on the standard DDH assumption. 
+Moreover, both of the security reductions are tight. 
+
+
+
+\section{Optimizations and Discussions}\label{sec:discussions}
+In this section, we describe optimizations and summarize the advantages of twisted ElGamal. 
+
+\subsection{Faster Decryption Algorithm}
+As in standard exponential ElGamal, to ensure additive homomorphism on message space $\mathbb{Z}_p$, 
+message in twisted ElGamal is also encoded to the exponent. 
+This makes decryption inefficient even with knowledge of secret key. 
+The bottleneck is the interval-version discrete logarithm search algorithm. 
+Let $[0, 2^\ell)$ be the interval (message space).  
+The time complexity of brute-force is $O(2^\ell)$.       
+We recommend employing dedicated algorithms to compute a discrete logarithm in an interval more efficiently. 
+The candidate algorithms include: 
+\begin{itemize} \itemsep 1pt \parskip 0pt \parsep 0pt
+    \item Pollard's kangaroo method~\cite{Pollard1978} and Galbraith-Ruprai algorithm~\cite{GR2010-PKC}: 
+        run in time $O(2^{\ell/2})$ with constant memory cost. 
+    
+    \item Bernstein-Lange algorithm~\cite{BL2012}: runs in time $O(2^{\ell/3})$ using a table of size $O(2^{\ell/3})$.
+
+    \item Shanks's algorithm~\cite{Shanks1971}: runs in time $O(2^{\ell/2})$ using a table of size $O(2^{\ell/2})$.   
+\end{itemize} 
+In this submission, we choose Shanks's algorithm for the following reasons: 
+(i) the first two algorithms run in expected polynomial time, namely, 
+they may take long time to find the solution in worst cases; 
+(ii) Shanks's algorithm is simple and admits flexible time-space trade off. 
+Let $n$ be an integer between $[0, \ell/2]$, it runs in time $O(2^{\ell/2-n})$ using a table of size $O(2^{\ell/2+n})$.
+We refer to $n$ as the time-space tuning parameter, which is set to be $0$ in the standard Shanks's algorithm.  
+% When $\ell = 32$ and $n = 7$, the average decryption time is less than 2ms by using a table of roughly 280MB. 
+% This demonstrates that Shanks's algorithm is more preferable in practice.
+
+
+\subsection{Signature and Zero-Knowledge Friendly}
+In many privacy-preserving applications, homomorphic PKE is used in combination with other cryptographic schemes. 
+As we will show, twisted ElGamal enjoys nice interoperability with signature and zero-knowledge proofs.   
+\begin{trivlist}
+\item \textbf{Integrate with signature.} The keypair of twisted ElGamal is a discrete logarithm tuple, 
+    which is identical to widely used signature in practice, such as ECDSA and Schnorr signature.
+    This fact enables efficient design of integrated signature and encryption schemes 
+    by composing twisted ElGamal and ECDSA/Schnorr. 
+    Please refer to~\cite{CMT2019} for more technical details, include formal security proof and example application. 
+
+\item \textbf{Work with zero-knowledge proofs.} The algebra structure of twisted ElGamal 
+    admits simple and efficient Sigma protocols 
+for proving knowledge of plaintext and randomness, two ciphertexts encrypt the same message. 
+Moreover, we can design efficient accompanying range proofs 
+by directly invoking the state-of-the-art Bulletproofs~\cite{BulletProof2018}.  
+This is superior than the standard ElGamal PKE. 
+To see why, recall that Bulletproofs only accepts statements of the form of Pedersen commitment $g^r h^m$.  
+To guarantee soundness, the DL relation between commitment key $(g, h)$ must be unknown to the prover. 
+However, a standard ElGamal ciphertext $C$ of $m$ under $pk$ is of the form $(g^r, pk^r g^m)$. 
+Although the second component can be viewed as a commitment of $m$ under commitment key $(pk, g)$,   
+we cannot \emph{directly} employ Bulletproofs to generate range proof for $m$, because $sk$ constitutes an obvious trapdoor. 
+In contrast, the second component of twisted ElGamal ciphertext is exactly of the form of Pedersen commitment $g^r h^m$, 
+and the DL relation between $(g, h)$ is unknown. 
+This allows us to directly invoke Bulletproofs to generate range proofs for encrypted values under twisted ElGamal 
+in a black-box manner, and these proofs can be easily aggregated. 
+Please refer to~\cite{CMT2019} for more technical details, including useful gadgets and formal security proof. 
+
+We note that we do can employ Bulletproofs to generate range proof for messages encrypted by standard ElGamal PKE. 
+But, we need to use a Pedersen commitment as a bridge, 
+i.e., (1) generate a Pedersen commitment $g^r h^m$; (2) prove the randomness and message under ElGamal ciphertext $(g^r, pk^r h^m)$ 
+and Pedersen commitment $g^r h^m$ are consistent via a Sigma protocol; (3) invoke Bulletproofs on $g^r h^m$. 
+By using twisted ElGamal in the place of standard ElGamal, we are able to dismiss steps (1) and (2).  
+We compare the cost of working with Bulletproofs between standard and twisted ElGamal PKE in the following table. 
+\end{trivlist}
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+& size & efficiency\\
+\hline
+standard ElGamal & $2|\mathbb{G}|+|\mathbb{Z}_p|$ & 4Exp+1Add\\
+\hline
+twisted ElGamal & \blue{0} & \blue{0}\\
+\hline
+\end{tabular}{}\label{table:comparison}
+\caption{The costs of working with Bulletproofs between standard ElGamal and twisted ElGamal. 
+The cost of ElGamal working with Bulletproofs comes from two parts, 
+i.e., an additional Pedersen commitment and a Sigma protocol for consistency between Pedersen commitment and ElGamal ciphertext.}
+\end{center}
+\end{table}
+
+
+\section{Implementation and Evaluation}
+We report an implementation of twisted ElGamal in C++ based on OpenSSL, 
+and collect the benchmarks on a MacBook Pro with an Intel i7-4870HQ CPU 
+(2.5GHz) and 16GB of RAM, using elliptic curve NID\_X9\_62\_prime256v1\footnote{Our implementation also supports other elliptic curves.}~\cite{OpenSSL_curve}, which has 128 bit security. 
+The default message space is 40bit, i.e., $[0, 2^{40}-1)$. 
+$\mathsf{Enc}$ and $\mathsf{Scalar}$ in 2 thread setting are roughly 15\% $\sim$ 25\% 
+faster than their counterpart in the single thread setting. 
+\begin{table}[!hbth]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}
+\hline
+& hash map & $\mathsf{Setup}$ & $\mathsf{KeyGen}$ & $\mathsf{Enc}$ & $\mathsf{Dec}$ & 
+  $\mathsf{ReRand}$ & $\mathsf{Add}$ & $\mathsf{Sub}$ & $\mathsf{Scalar}$ \\
+\hline
+\multirow{2}{*}{1 thread}
+   & 275MB & \red{50s+6s} & 0.0158 & 0.141 & 400 & 0.157 & 0.0031 & 0.0039 & 0.136\\
+\cline{2-10}
+   & 550MB & \red{100s+12s} & ---     & --- & 200 & ---   & ---    & ---    & ---  \\
+\hline
+\blue{2 thread} & --- & ---        & 0.116  & --- & 331   & ---   & ---    & ---    & 0.094\\
+\hline
+\blue{4 thread} & 275MB & ---        & ---     & --- & 173   & ---   & ---    & ---    & ---\\
+\hline
+\blue{4 thread} & 1.1GB & ---        & ---     & --- & 42   & ---   & ---    & ---    & ---\\
+\hline
+\end{tabular}{}\label{table:efficiency of twisted ElGamal}
+\end{center}
+\caption{Except the $\mathsf{Setup}$ algorithm (highlighted in red color), 
+the efficiency of other algorithms are measured by ms. 
+The decryption time is obtained using a hash map of size roughly 270MB. 
+Faster decryption speed can be achieved by enlarging the table. 
+The setup algorithm runs ``one-and-for-all'', 
+it first generates and serializes a key-value hash map called ``\texttt{point2index.map}'' 
+to accelerate decryption (this step takes roughly \red{50s}), 
+then loads it to the memory (this step takes roughly \red{6s}).}
+\end{table}
+
+
+
+\bibliographystyle{alpha}
+\bibliography{\path/mycrypto}
+
+\newpage
+
+
+
+
+
+ 
+\end{document}
