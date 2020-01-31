@@ -11,7 +11,9 @@ Twisted ElGamal PKE is as secure and efficient as standard ElGamal. Moreover, it
 - zero-knowledge proofs friendly
 - fast decryption: for 32-bit message space, decryption is less than 1ms with a 264 MB hash table
 
-This makes twisted ElGamal extremely useful in numerous privacy-preserving setting. See the document in doc for more details.  
+This makes twisted ElGamal extremely useful in numerous privacy-preserving setting. See the document in doc for more details. 
+
+By the way, we also implement standand exponent ElGamal PKE for reference.   
 
 ## Specifications
 
@@ -40,12 +42,13 @@ This makes twisted ElGamal extremely useful in numerous privacy-preserving setti
 
 
 - /src: source files
-  * twisted_elgamal.hpp: implement twisted ElGamal PKE, depending on calculate_dlog.hpp and routines.hpp
+  * twisted_elgamal_pke.hpp: implement twisted ElGamal PKE, depending on calculate_dlog.hpp and routines.hpp
+  * elgamal_pke.hpp: implement ElGamal PKE, depending on calculate_dlog.hpp and routines.hpp
   * calculate_dlog.hpp: implement Shanks DLOG algorithm
 
 
 - /test: test files
-  * test_twisted_elgamal.cpp: main program - test twisted ElGamal PKE, include correctness and benchmark tests (both single thread and multi-thread)
+  * test_elgamal.cpp: main program - test ElGamal PKE, include correctness and benchmark tests (both single thread and multi-thread)
 
 
 - /doc: technical report of twisted ElGamal

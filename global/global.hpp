@@ -36,6 +36,7 @@ using namespace std;
 /* global constants */
 const size_t POINT_LEN = 33; // the compressed expression of an EC points is 33 bytes
 const size_t BN_LEN = 32;    // assume base field and scalar field are less than 2^256 (stored in 32-bytes)
+const size_t BIT_LEN = 256;  // each scalar field element is 256 bit 
 
 /* global variables of OpenSSL*/
 EC_GROUP *group;
@@ -58,10 +59,10 @@ bool global_initialize(int curve_id)
     order = EC_GROUP_get0_order(group);
     bn_ctx = BN_CTX_new();
     if (group == NULL || order == NULL || bn_ctx == NULL) return false; 
-    EC_GROUP_precompute_mult((EC_GROUP*) group, bn_ctx); // pre-compute the table of g     
+    EC_GROUP_precompute_mult((EC_GROUP *) group, bn_ctx); // pre-compute the table of g     
     
     #ifdef DEBUG
-    if(EC_GROUP_have_precompute_mult((EC_GROUP*)group)){ 
+    if(EC_GROUP_have_precompute_mult((EC_GROUP *)group)){ 
         cout << "precompute enable" << endl;
     } 
     else{
