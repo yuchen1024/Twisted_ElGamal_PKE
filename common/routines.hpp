@@ -8,7 +8,7 @@ this hpp implements some routine algorithms
 #ifndef __ROUTINES__
 #define __ROUTINES__
 
-#include "../global/global.hpp"
+#include "global.hpp"
 
 /* Big Number operations */
 

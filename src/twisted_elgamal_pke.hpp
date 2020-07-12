@@ -5,10 +5,10 @@ this hpp implements twisted ElGamal PKE scheme
 * @paper      https://eprint.iacr.org/2019/319
 * @copyright  MIT license (see LICENSE file)
 *****************************************************************************/
-#include "../global/global.hpp"
-#include "../depends/hash.hpp"
-#include "../depends/print.hpp"
-#include "../depends/routines.hpp"
+#include "../common/global.hpp"
+#include "../common/hash.hpp"
+#include "../common/print.hpp"
+#include "../common/routines.hpp"
 
 #include "calculate_dlog.hpp"
 //#include "fast_mul.hpp"

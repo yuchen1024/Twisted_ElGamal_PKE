@@ -6,7 +6,7 @@ this hpp implements DLOG algorithm
 * @copyright  MIT license (see LICENSE file)
 *****************************************************************************/
 
-#include "../global/global.hpp"
+#include "../common/global.hpp"
 
 /* 
     Shanks algorithm for DLOG problem: given (g, h) find x \in [0, n = 2^RANGE_LEN) s.t. g^x = h 

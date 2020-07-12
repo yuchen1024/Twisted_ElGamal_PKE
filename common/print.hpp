@@ -8,7 +8,7 @@ this hpp implements some routine algorithms
 #ifndef __PRINT__
 #define __PRINT__
 
-#include "../global/global.hpp"
+#include "global.hpp"
 
 const size_t LINE_LEN = 120;     // the length of split line
 

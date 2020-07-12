@@ -8,7 +8,7 @@ this hpp implements hash functions
 #ifndef __HASH__
 #define __HASH__
 
-#include "../global/global.hpp"
+#include "global.hpp"
 
 /* global variables of hash functions */
 const size_t HASH_OUTPUT_LEN = 32;  // hash output = 256-bit string
