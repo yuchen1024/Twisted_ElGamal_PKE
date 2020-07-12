@@ -2,6 +2,37 @@
 
 #include "../src/twisted_elgamal_pke.hpp"
 
+void test_basic_operation(size_t TEST_NUM)
+{
+    cout << "begin the basic operation >>>" << endl; 
+    
+    /* random test */ 
+    BIGNUM * a[TEST_NUM]; 
+    EC_POINT * A[TEST_NUM]; 
+    for(auto i = 0; i < TEST_NUM; i++)
+    {
+        a[i] = BN_new();
+        BN_random(a[i]); 
+        A[i] = EC_POINT_new(group);
+        ECP_random(A[i]);  
+    }
+    auto start_time = chrono::steady_clock::now(); 
+    for(auto i = 0; i < TEST_NUM; i++)
+    {
+        EC_POINT_mul(group, A[i], NULL, A[i], a[i], bn_ctx); // A = A^a
+    }
+    auto end_time = chrono::steady_clock::now(); 
+    auto running_time = end_time - start_time;
+    cout << "average point multication takes time = " 
+    << chrono::duration <double, milli> (running_time).count()/TEST_NUM << " ms" << endl;
+
+    for(auto i = 0; i < TEST_NUM; i++)
+    {
+        BN_free(a[i]);
+        EC_POINT_free(A[i]);  
+    }
+}
+
 void test_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, size_t DEC_THREAD_NUM)
 {
     cout << "begin the basic correctness test >>>" << endl; 
@@ -333,6 +364,13 @@ int main()
 {  
     global_initialize(NID_X9_62_prime256v1);   
     //global_initialize(NID_X25519);
+
+    // size_t TEST_NUM = 10000; 
+
+    // SplitLine_print('-'); 
+    // cout << "basic operation benchmark test >>>>>>" << endl; 
+    // test_basic_operation(TEST_NUM); 
+    // SplitLine_print('-'); 
 
     SplitLine_print('-'); 
     cout << "Twisted ElGamal PKE test begins >>>>>>" << endl; 

@@ -13,7 +13,7 @@ Twisted ElGamal PKE is as secure and efficient as standard ElGamal. Moreover, it
 
 This makes twisted ElGamal extremely useful in numerous privacy-preserving setting. See the document in doc for more details. 
 
-By the way, we also implement standand exponent ElGamal PKE for reference.   
+By the way, we also implement standard exponent ElGamal PKE for reference.   
 
 ## Specifications
 
@@ -25,10 +25,10 @@ By the way, we also implement standand exponent ElGamal PKE for reference.
 ## Code Structure
 - README.md
 
+- CmakeLists.txt: cmake file
 
-- /build: compile and execute 
-  * CMakeLists.txt: cmake file
-  * test_twisted_elgamal: the resulting executable file
+- /build: (after compile and execute) 
+  * test_twisted_elgamal/test_elgamal: the resulting executable file
   * point2index.table: the hashmap used for DLOG algorithm (if this file does not exist, the program will generate one)
 
 
@@ -68,10 +68,10 @@ download [openssl-master.zip](https://github.com/openssl/openssl.git), then
 
 ## Compile and Run
 ```
-  $ cd build
-  $ cmake .
+  $ mkdir build && cd build
+  $ cmake ..
   $ make
-  $ ./test_twisted_elgamal
+  $ ./test_twisted_elgamal && ./test_elgamal
 ```
 
 ## Parameter choices

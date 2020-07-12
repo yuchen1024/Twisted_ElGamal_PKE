@@ -11,7 +11,7 @@ this hpp implements twisted ElGamal PKE scheme
 #include "../depends/routines.hpp"
 
 #include "calculate_dlog.hpp"
-#include "fast_mul.hpp"
+//#include "fast_mul.hpp"
 
 const string hashmap_file  = "h_point2index.table"; // name of hashmap file
 

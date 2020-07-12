@@ -10,6 +10,10 @@ find_package(OPENSSL REQUIRED)
 
 include_directories(${OPENSSL_INCLUDE_DIR})
   
-add_executable(test_twisted_elgamal ../test/test_twisted_elgamal.cpp)
+add_executable(test_twisted_elgamal test/test_twisted_elgamal.cpp)
 
 target_link_libraries(test_twisted_elgamal ${OPENSSL_LIBRARIES})
+
+add_executable(test_elgamal test/test_elgamal.cpp)
+
+target_link_libraries(test_elgamal ${OPENSSL_LIBRARIES})
