@@ -2,14 +2,14 @@
 
 #include "../src/elgamal_pke.hpp"
 
-void test_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, size_t DEC_THREAD_NUM)
+void test_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, size_t IO_THREAD_NUM, size_t DEC_THREAD_NUM)
 {
     cout << "begin the basic correctness test >>>" << endl; 
     
     ElGamal_PP pp; 
     ElGamal_PP_new(pp); 
     
-    ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM);
+    ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
     ElGamal_Initialize(pp); 
 
     ElGamal_KP keypair;
@@ -56,14 +56,15 @@ void test_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, size_t DEC_THREAD_NUM)
     BN_free(m_prime); 
 }
 
-void benchmark_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, size_t DEC_THREAD_NUM, size_t TEST_NUM)
+void benchmark_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, 
+                       size_t IO_THREAD_NUM, size_t DEC_THREAD_NUM, size_t TEST_NUM)
 {
     SplitLine_print('-'); 
     cout << "begin the benchmark test (single thread), test_num = " << TEST_NUM << endl;
 
     ElGamal_PP pp; 
     ElGamal_PP_new(pp); 
-    ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM);
+    ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
     ElGamal_Initialize(pp); 
 
     ElGamal_KP keypair[TEST_NUM];       // keypairs
@@ -197,14 +198,14 @@ void benchmark_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, size_t DEC_THREAD_NUM
 
 
 void benchmark_parallel_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, 
-                                        size_t DEC_THREAD_NUM, size_t TEST_NUM)
+                                size_t IO_THREAD_NUM, size_t DEC_THREAD_NUM, size_t TEST_NUM)
 {
     SplitLine_print('-'); 
     cout << "begin the benchmark test (2 threads), test_num = " << TEST_NUM << endl;
 
     ElGamal_PP pp; 
     ElGamal_PP_new(pp); 
-    ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM);
+    ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
     ElGamal_Initialize(pp); 
 
     ElGamal_KP keypair[TEST_NUM];       // keypairs
@@ -263,7 +264,7 @@ void benchmark_parallel_elgamal(size_t MSG_LEN, size_t MAP_TUNNING,
     << chrono::duration <double, milli> (running_time).count()/TEST_NUM << " ms" << endl;
 
     /* test decryption efficiency */
-    cout << "decryption thread = " << pp.THREAD_NUM << endl; 
+    cout << "decryption thread = " << pp.DEC_THREAD_NUM << endl; 
     start_time = chrono::steady_clock::now(); 
     for(auto i = 0; i < TEST_NUM; i++)
     {
@@ -340,12 +341,13 @@ int main()
 
     size_t MSG_LEN = 32; 
     size_t MAP_TUNNING = 7; 
+    size_t IO_THREAD_NUM = 4; 
     size_t DEC_THREAD_NUM = 4;  
     size_t TEST_NUM = 30000;  
 
-    test_elgamal(MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM);
-    benchmark_elgamal(MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM, TEST_NUM); 
-    benchmark_parallel_elgamal(MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM, TEST_NUM); 
+    test_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
+    benchmark_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM, TEST_NUM); 
+    benchmark_parallel_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM, TEST_NUM); 
 
     SplitLine_print('-'); 
     cout << "ElGamal PKE test finishes <<<<<<" << endl; 

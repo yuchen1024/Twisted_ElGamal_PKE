@@ -33,14 +33,15 @@ void test_basic_operation(size_t TEST_NUM)
     }
 }
 
-void test_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, size_t DEC_THREAD_NUM)
+void test_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, 
+                          size_t IO_THREAD_NUM, size_t DEC_THREAD_NUM)
 {
     cout << "begin the basic correctness test >>>" << endl; 
     
     Twisted_ElGamal_PP pp; 
     Twisted_ElGamal_PP_new(pp); 
     
-    Twisted_ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM);
+    Twisted_ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
     Twisted_ElGamal_Initialize(pp); 
 
     Twisted_ElGamal_KP keypair;
@@ -87,14 +88,16 @@ void test_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, size_t DEC_THREAD_
     BN_free(m_prime); 
 }
 
-void benchmark_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, size_t DEC_THREAD_NUM, size_t TEST_NUM)
+void benchmark_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, 
+                               size_t IO_THREAD_NUM, size_t DEC_THREAD_NUM, 
+                               size_t TEST_NUM)
 {
     SplitLine_print('-'); 
     cout << "begin the benchmark test (single thread), test_num = " << TEST_NUM << endl;
 
     Twisted_ElGamal_PP pp; 
     Twisted_ElGamal_PP_new(pp); 
-    Twisted_ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM);
+    Twisted_ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
     Twisted_ElGamal_Initialize(pp); 
 
     Twisted_ElGamal_KP keypair[TEST_NUM];       // keypairs
@@ -228,14 +231,16 @@ void benchmark_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, size_t DEC_TH
 
 
 void benchmark_parallel_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, 
-                                        size_t DEC_THREAD_NUM, size_t TEST_NUM)
+                                        size_t IO_THREAD_NUM, size_t DEC_THREAD_NUM, 
+                                        size_t TEST_NUM)
 {
     SplitLine_print('-'); 
-    cout << "begin the benchmark test (2 threads), test_num = " << TEST_NUM << endl;
+    cout << "begin the benchmark test: " << " IO_THREAD_NUM = " << IO_THREAD_NUM << 
+    " DEC_THREAD_NUM = " << DEC_THREAD_NUM << " TEST_NUM = " << TEST_NUM << endl;
 
     Twisted_ElGamal_PP pp; 
     Twisted_ElGamal_PP_new(pp); 
-    Twisted_ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM);
+    Twisted_ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
     Twisted_ElGamal_Initialize(pp); 
 
     Twisted_ElGamal_KP keypair[TEST_NUM];       // keypairs
@@ -294,7 +299,7 @@ void benchmark_parallel_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING,
     << chrono::duration <double, milli> (running_time).count()/TEST_NUM << " ms" << endl;
 
     /* test decryption efficiency */
-    cout << "decryption thread = " << pp.THREAD_NUM << endl; 
+    cout << "decryption thread = " << pp.DEC_THREAD_NUM << endl; 
     start_time = chrono::steady_clock::now(); 
     for(auto i = 0; i < TEST_NUM; i++)
     {
@@ -363,14 +368,6 @@ void benchmark_parallel_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING,
 int main()
 {  
     global_initialize(NID_X9_62_prime256v1);   
-    //global_initialize(NID_X25519);
-
-    // size_t TEST_NUM = 10000; 
-
-    // SplitLine_print('-'); 
-    // cout << "basic operation benchmark test >>>>>>" << endl; 
-    // test_basic_operation(TEST_NUM); 
-    // SplitLine_print('-'); 
 
     SplitLine_print('-'); 
     cout << "Twisted ElGamal PKE test begins >>>>>>" << endl; 
@@ -378,12 +375,14 @@ int main()
 
     size_t MSG_LEN = 32; 
     size_t MAP_TUNNING = 7; 
+    size_t IO_THREAD_NUM = 4; 
     size_t DEC_THREAD_NUM = 4;  
     size_t TEST_NUM = 30000;  
 
-    test_twisted_elgamal(MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM);
-    benchmark_twisted_elgamal(MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM, TEST_NUM); 
-    benchmark_parallel_twisted_elgamal(MSG_LEN, MAP_TUNNING, DEC_THREAD_NUM, TEST_NUM); 
+
+    test_twisted_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
+    benchmark_twisted_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM, TEST_NUM); 
+    benchmark_parallel_twisted_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM, TEST_NUM); 
 
     SplitLine_print('-'); 
     cout << "Twisted ElGamal PKE test finishes <<<<<<" << endl; 
