@@ -138,6 +138,14 @@ We also provide parallel implementations, whose Enc, Dec, Scalar performances ar
   * homomorphic subtract
   * scalar multiplication 
 
+---
+
+## Updates
+This library is obsoleted due to the inefficiency of MIRACL and complicated interfaces of OpenSSL. 
+We refer to https://github.com/yuchen1024/Kunlun for a neat and efficient implementation. 
+
+---
+
 ## License
 
 This library is licensed under the [MIT License](LICENSE).

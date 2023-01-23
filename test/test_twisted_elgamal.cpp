@@ -33,6 +33,7 @@ void test_basic_operation(size_t TEST_NUM)
     }
 }
 
+
 void test_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, 
                           size_t IO_THREAD_NUM, size_t DEC_THREAD_NUM)
 {
@@ -45,7 +46,9 @@ void test_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING,
     Twisted_ElGamal_Initialize(pp); 
 
     Twisted_ElGamal_KP keypair;
-    Twisted_ElGamal_KP_new(keypair); 
+    Twisted_ElGamal_KP_new(keypair);
+
+
     Twisted_ElGamal_KeyGen(pp, keypair); 
 
     Twisted_ElGamal_CT CT; 
@@ -86,6 +89,73 @@ void test_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING,
     Twisted_ElGamal_CT_free(CT); 
     BN_free(m);
     BN_free(m_prime); 
+}
+
+
+// test encapsulation mechanism
+void test_twisted_elgamal_encaps(size_t MSG_LEN, size_t MAP_TUNNING, 
+                          size_t IO_THREAD_NUM, size_t DEC_THREAD_NUM, size_t TEST_NUM)
+{
+    cout << "begin the basic correctness test >>>" << endl; 
+    
+    Twisted_ElGamal_PP pp; 
+    Twisted_ElGamal_PP_new(pp); 
+    
+    Twisted_ElGamal_Setup(pp, MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
+    Twisted_ElGamal_Initialize(pp); 
+
+    auto start_time = chrono::steady_clock::now(); 
+    Twisted_ElGamal_KP keypair[TEST_NUM];
+    for(auto i = 0; i < TEST_NUM; i++)
+    {
+        Twisted_ElGamal_KP_new(keypair[i]); 
+        Twisted_ElGamal_KeyGen(pp, keypair[i]); 
+    }
+    auto end_time = chrono::steady_clock::now(); 
+    auto running_time = end_time - start_time;
+    cout << "key generation takes time = " 
+    << chrono::duration <double, milli> (running_time).count()/TEST_NUM << " ms" << endl;
+
+    EC_POINT *CT = EC_POINT_new(group);
+    EC_POINT *KEY = EC_POINT_new(group);
+    EC_POINT *KEY_prime = EC_POINT_new(group);
+
+    /* random test */ 
+    SplitLine_print('-'); 
+    cout << "begin the random test >>>" << endl; 
+    
+    BIGNUM *r = BN_new(); 
+    
+    start_time = chrono::steady_clock::now(); 
+    for(auto i = 0; i < TEST_NUM; i++)
+    {
+        BN_random(r);  
+        Twisted_ElGamal_Encaps(pp, keypair[i].pk, r, CT, KEY);
+    }
+    end_time = chrono::steady_clock::now(); 
+    running_time = end_time - start_time;
+    cout << "encapsulation takes time = " 
+    << chrono::duration <double, milli> (running_time).count()/TEST_NUM << " ms" << endl;
+
+    start_time = chrono::steady_clock::now(); 
+    for(auto i = 0; i < TEST_NUM; i++)
+    {
+        Twisted_ElGamal_Decaps(pp, keypair[i].sk, CT, KEY_prime); 
+    }
+    end_time = chrono::steady_clock::now(); 
+    running_time = end_time - start_time;
+    cout << "decapsulation takes time = " 
+    << chrono::duration <double, milli> (running_time).count()/TEST_NUM << " ms" << endl;
+
+    Twisted_ElGamal_PP_free(pp); 
+    for(auto i = 0; i < TEST_NUM; i++)
+    {
+        Twisted_ElGamal_KP_free(keypair[i]);
+    } 
+    EC_POINT_free(CT);
+    EC_POINT_free(KEY);
+    EC_POINT_free(KEY_prime);
+    BN_free(r); 
 }
 
 void benchmark_twisted_elgamal(size_t MSG_LEN, size_t MAP_TUNNING, 
@@ -373,20 +443,28 @@ int main()
     cout << "Twisted ElGamal PKE test begins >>>>>>" << endl; 
     SplitLine_print('-'); 
 
-    size_t MSG_LEN = 32; 
+    // size_t MSG_LEN = 32; 
+    // size_t MAP_TUNNING = 7; 
+    // size_t IO_THREAD_NUM = 4; 
+    // size_t DEC_THREAD_NUM = 4;  
+    // size_t TEST_NUM = 30000;  
+
+    size_t MSG_LEN = 40; 
     size_t MAP_TUNNING = 7; 
     size_t IO_THREAD_NUM = 4; 
     size_t DEC_THREAD_NUM = 4;  
-    size_t TEST_NUM = 30000;  
+    size_t TEST_NUM = 100;  
 
 
-    test_twisted_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
-    benchmark_twisted_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM, TEST_NUM); 
+    // test_twisted_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM);
+    // benchmark_twisted_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM, TEST_NUM); 
     benchmark_parallel_twisted_elgamal(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM, TEST_NUM); 
 
-    SplitLine_print('-'); 
-    cout << "Twisted ElGamal PKE test finishes <<<<<<" << endl; 
-    SplitLine_print('-'); 
+    // SplitLine_print('-'); 
+    // cout << "Twisted ElGamal PKE test finishes <<<<<<" << endl; 
+    // SplitLine_print('-'); 
+
+    //test_twisted_elgamal_encaps(MSG_LEN, MAP_TUNNING, IO_THREAD_NUM, DEC_THREAD_NUM, TEST_NUM); 
 
     global_finalize();
     

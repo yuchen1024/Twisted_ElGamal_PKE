@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/c++  -std=c++11 -pthread -O3 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX11.1.sdk -mmacosx-version-min=10.15 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/test_elgamal.dir/test_elgamal.cpp.o -o test_elgamal  /usr/local/lib/libssl.dylib /usr/local/lib/libcrypto.dylib 

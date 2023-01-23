@@ -275,6 +275,36 @@ void Twisted_ElGamal_Dec(Twisted_ElGamal_PP &pp,
     }  
 }
 
+
+/* Encaps algorithm: compute (CT, k) = Encaps(pk, r): where CT = pk^r, k = g^r */ 
+void Twisted_ElGamal_Encaps(Twisted_ElGamal_PP &pp, EC_POINT* &pk, BIGNUM* &r, 
+                            EC_POINT* &CT, EC_POINT* &KEY)
+{ 
+    // begin encryption
+    EC_POINT_mul(group, CT, NULL, pk, r, bn_ctx); // CT = pk^r
+    EC_POINT_mul(group, KEY, NULL, pp.g, r, bn_ctx); // KEY = g^r
+
+    #ifdef DEBUG
+        cout << "twisted ElGamal encapsulation finishes >>>"<< endl;
+        ECP_print(CT, "CT");
+        ECP_print(KEY, "KEY");  
+    #endif
+}
+
+/* Decaps algorithm: compute KEY = Decaps(sk, CT) */ 
+void Twisted_ElGamal_Decaps(Twisted_ElGamal_PP &pp, BIGNUM* &sk, EC_POINT* &CT, EC_POINT* &KEY)
+{ 
+    //begin decryption  
+    BIGNUM *sk_inverse = BN_new(); 
+    BN_mod_inverse(sk_inverse, sk, order, bn_ctx);  // compute the inverse of sk in Z_q^* 
+    EC_POINT_mul(group, KEY, NULL, CT, sk_inverse, bn_ctx); // KEY = CT^{sk^{-1}} = g^r 
+
+    #ifdef DEBUG
+        cout << "twisted ElGamal decapsulation finishes >>>"<< endl;
+        ECP_print(KEY, "KEY");  
+    #endif
+}
+
 /* rerandomize ciphertext CT with given randomness r */ 
 void Twisted_ElGamal_ReRand(Twisted_ElGamal_PP &pp, 
                              EC_POINT* &pk, 

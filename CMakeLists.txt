@@ -17,3 +17,7 @@ target_link_libraries(test_twisted_elgamal ${OPENSSL_LIBRARIES})
 add_executable(test_elgamal test/test_elgamal.cpp)
 
 target_link_libraries(test_elgamal ${OPENSSL_LIBRARIES})
+
+add_executable(test_new_feature test/test_new_feature.cpp)
+
+target_link_libraries(test_new_feature ${OPENSSL_LIBRARIES})

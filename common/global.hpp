@@ -59,6 +59,7 @@ bool global_initialize(int curve_id)
     order = EC_GROUP_get0_order(group);
     bn_ctx = BN_CTX_new();
     if (group == NULL || order == NULL || bn_ctx == NULL) return false; 
+    
     EC_GROUP_precompute_mult((EC_GROUP *) group, bn_ctx); // pre-compute the table of g     
     
     #ifdef DEBUG
